@@ -26,7 +26,7 @@ get_ipython().run_line_magic('matplotlib', 'inline')
 import pandas as pd
 import numpy as np
 
-reviews_datasets = pd.read_csv("F:\\BUET\\Project\\Code\\Dataset\\Newfolder\\dataset_final_260321.csv",encoding="utf8")
+reviews_datasets = pd.read_csv("F:\\Project\\DevOps_Dataset.csv",encoding="utf8")
 #reviews_datasets = reviews_datasets.head(30)
 reviews_datasets.dropna()
 obody = reviews_datasets['Body']
