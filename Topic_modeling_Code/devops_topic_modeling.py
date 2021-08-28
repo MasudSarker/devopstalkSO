@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
 """
+Created on Mon May  3 21:44:55 2021
+
+@author: masud
+"""
+
+# -*- coding: utf-8 -*-
+"""
 Created on Mon Feb 15 07:10:08 2021
 
 @author: masud
@@ -26,18 +33,19 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
-reviews_datasets = pd.read_csv("F:\\BUET\\Project\\Code\\Dataset\\Newfolder\\dataset_final_260321.csv",encoding="utf8")
+reviews_datasets = pd.read_csv("F:\\Project\\DevOps_Dataset.csv",encoding="utf8")
 #reviews_datasets = reviews_datasets.head(40)
 reviews_datasets.dropna()
 cview = reviews_datasets['ViewCount'].astype(int)
 avgfav = reviews_datasets['FavoriteCount'].astype(int)
 avgscore = reviews_datasets['Score'].astype(int)
 body = reviews_datasets['Body']
+titles = reviews_datasets['Title']
 caccepans = reviews_datasets['AcceptedAnsCount']
 ansdelay = reviews_datasets['answerdelay']
-ansdelay = ansdelay.fillna(0)
-avgdelay = ansdelay*24;
-print(avgdelay)
+avgdelay = ansdelay.fillna(0)
+#avgdelay = ansdelay*24;
+#print(avgdelay)
 reviews_datasets.head()
 
 
@@ -71,7 +79,7 @@ stop_words = set(stopwords.words('english'))
 import re
 
 # Convert to list
-data = reviews_datasets.Body.values.tolist()
+data = reviews_datasets.Title.values.tolist()
 
 # Remove new line characters
 data = [re.sub('\s+', ' ', sent) for sent in data]
@@ -176,18 +184,20 @@ corpus = [id2word.doc2bow(text) for text in texts]
 
 # In[66]:
 
-
+#gamma_threshold
 # Build LDA model
+#minimum_phi_value
 #lda_model = gensim.models.ldamodel.LdaModel(corpus=corpus,
-                                           # id2word=id2word,
-                                           # num_topics=28, 
-                                           # random_state=100,
-                                           # update_every=1,
-                                           # chunksize=100,
-                                           # passes=10,
-                                           # alpha='auto',
-                                           #  eval_every=10,
-                                           # per_word_topics=True)
+                                            # id2word=id2word,
+                                            # num_topics=28, 
+                                            # random_state=100,
+                                            # update_every=1,
+                                            # chunksize=100,
+                                            # passes=10,
+                                            # alpha='auto',
+                                            #  eta=.01,
+                                            #  eval_every=10,                                            
+                                            # per_word_topics=True)
 
 
 # In[67]:
@@ -226,7 +236,7 @@ os.environ['MALLET_HOME'] = 'F:\\mallet-2.0.8'
 
 mallet_path = 'F:\\mallet-2.0.8\\bin\\mallet'
 #ldamallet_test = gensim.models.wrappers.LdaMallet(mallet_path, corpus=corpus, num_topics=20, id2word=dictionary_test)
-lda_mallet = gensim.models.wrappers.LdaMallet(mallet_path, corpus=corpus, num_topics=28, id2word=id2word, optimize_interval=20, iterations=1000)
+lda_mallet = gensim.models.wrappers.LdaMallet(mallet_path, corpus=corpus, num_topics=30, id2word=id2word, optimize_interval=10, iterations=1000, alpha=5)
 
 
 # In[90]:
@@ -248,7 +258,7 @@ lda_mallet = gensim.models.wrappers.LdaMallet(mallet_path, corpus=corpus, num_to
 # Devops topic development
 ###################################
 
-def format_topics_sentences(ldamodel=lda_mallet, corpus=corpus, texts=data_lemmatized):
+def format_topics_sentences(ldamodel=lda_mallet, corpus=corpus, texts=data_lemmatized, title=data_lemmatized):
     # Init output
     sent_topics_df = pd.DataFrame()
 
@@ -267,16 +277,17 @@ def format_topics_sentences(ldamodel=lda_mallet, corpus=corpus, texts=data_lemma
 
     # Add original text to the end of the output
     contents = pd.Series(texts)
-    sent_topics_df = pd.concat([sent_topics_df, contents], axis=1)
+    contents2 = pd.Series(title)
+    sent_topics_df = pd.concat([sent_topics_df, contents, contents2], axis=1)
     return(sent_topics_df)
 
 
-df_topic_sents_keywords = format_topics_sentences(ldamodel=lda_mallet, corpus=corpus, texts=body)
+df_topic_sents_keywords = format_topics_sentences(ldamodel=lda_mallet, corpus=corpus, texts=body, title=titles)
 
 # Format
 df_dominant_topic = df_topic_sents_keywords.reset_index()
-df_dominant_topic.columns = ['Document_No', 'Dominant_Topic', 'Topic_Perc_Contrib', 'Keywords', 'texts']
-df_dominant_topic.to_csv("D:\\final_topics_with_body_06042021_new2.csv")
+df_dominant_topic.columns = ['Document_No', 'Dominant_Topic', 'Topic_Perc_Contrib', 'Keywords', 'texts', 'title']
+df_dominant_topic.to_csv("F:\\Project\\final_topics_include_postbody.csv")
 
 #df_dominant_topic.groupby('Keywords')['Text'].sum()
 # Show
@@ -289,7 +300,7 @@ df_dominant_topic.to_csv("D:\\final_topics_with_body_06042021_new2.csv")
 #Python Topics Modeling
 python_topics_modeling = df_dominant_topic.groupby(['Keywords','Dominant_Topic'])['Dominant_Topic'].count().astype(int)
 #print(python_topics_modeling)
-python_topics_modeling.to_csv("D:\\final_topics_modeling_06042021_new2.csv")
+python_topics_modeling.to_csv("F:Project\\final_topics_modeling.csv")
 
 
 
@@ -336,7 +347,7 @@ df_dominant_topic.columns = ['Document_No', 'Dominant_Topic', 'Topic_Perc_Contri
 averag_view_wise_topics = df_dominant_topic.groupby('Keywords').agg({'avgview':'mean', 'avgfav':'mean','avgscore':'mean'})
 #averag_view_wise_topics = df_dominant_topic.groupby('Keywords')['avgview'].mean().astype(int)
 #print(averag_view_wise_topics)
-averag_view_wise_topics.to_csv("D:\\final_topics_popularity_06032021_new2.csv")
+averag_view_wise_topics.to_csv("F:\\Project\\final_topics_popularity.csv")
 
 #average_wise_topcs.sort_index(ascending =False)
 
@@ -388,4 +399,4 @@ df_dominant_topic.columns = ['Document_No', 'Dominant_Topic', 'Topic_Perc_Contri
 topics_difficulty = df_dominant_topic.groupby('Keywords').agg({'accepans':'sum', 'avgdelay':'mean'})
 #averag_view_wise_topics = df_dominant_topic.groupby('Keywords')['avgview'].mean().astype(int)
 #print(averag_view_wise_topics)
-topics_difficulty.to_csv("D:\\final_topics_difficulty_06032021_new2.csv")
+topics_difficulty.to_csv("F:\\Project\\final_topics_difficulty.csv")
